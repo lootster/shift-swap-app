@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum WantType {
+  SAME_DAY
+  DATE_LIST
+}
+
+enum TimeRule {
+  ANY
+  EXACT_START
+  END_NOT_AFTER
+}
+
+model User {
+  id         String   @id @default(cuid())
+  fullName   String
+  appleEmail String   @unique
+  createdAt  DateTime @default(now())
+
+  shifts              Shift[]
+  swapRequests        SwapRequest[] @relation("SwapRequester")
+  interests           Interest[]
+
+  @@map("users")
+}
+
+model Shift {
+  id            String @id @default(cuid())
+  userId        String
+  date          String // Store as YYYY-MM-DD string
+  start         String // Store as HH:mm string
+  end           String // Store as HH:mm string
+  durationHours Int    // 4 or 9
+
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  haveShiftRequests SwapRequest[]
+  offeredInterests  Interest[]
+
+  @@map("shifts")
+}
+
+model SwapRequest {
+  id              String    @id @default(cuid())
+  requesterUserId String
+  haveShiftId     String
+  wantType        WantType
+  wantDates       String?   // JSON array of dates when wantType is DATE_LIST
+  timeRule        TimeRule
+  timeValue       String?   // HH:mm format when applicable
+  note            String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  requester User      @relation("SwapRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  haveShift Shift     @relation(fields: [haveShiftId], references: [id], onDelete: Cascade)
+  interests Interest[]
+
+  @@map("swap_requests")
+}
+
+model Interest {
+  id              String   @id @default(cuid())
+  swapRequestId   String
+  interestedUserId String
+  offeredShiftId  String
+  createdAt       DateTime @default(now())
+  isActive        Boolean  @default(true)
+
+  swapRequest    SwapRequest @relation(fields: [swapRequestId], references: [id], onDelete: Cascade)
+  interestedUser User        @relation(fields: [interestedUserId], references: [id], onDelete: Cascade)
+  offeredShift   Shift       @relation(fields: [offeredShiftId], references: [id], onDelete: Cascade)
+
+  @@unique([swapRequestId, interestedUserId, offeredShiftId])
+  @@map("interests")
+}
