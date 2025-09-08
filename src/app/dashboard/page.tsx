@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCurrentDateSG,
@@ -27,6 +27,32 @@ interface Shift {
   durationHours: number;
 }
 
+interface SwapRequest {
+  id: string;
+  wantType: "SAME_DAY" | "DATE_LIST";
+  wantDates: string | null;
+  timeRule: "ANY" | "EXACT_START" | "END_NOT_AFTER";
+  timeValue: string | null;
+  createdAt: string;
+  note?: string;
+  requester: {
+    fullName: string;
+    appleEmail: string;
+  };
+  haveShift: Shift;
+  hasMyInterest: boolean;
+  myInterestId: string | null;
+  interestCount: number;
+  interests?: Array<{
+    id: string;
+    interestedUser: {
+      fullName: string;
+      appleEmail: string;
+    };
+    offeredShift: Shift;
+  }>;
+}
+
 type ActiveTab = "post" | "browse" | "requests";
 
 export default function Dashboard() {
@@ -36,12 +62,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAuth();
-    fetchShifts();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch("/api/me");
       const data = await response.json();
@@ -51,12 +72,18 @@ export default function Dashboard() {
       } else {
         router.push("/");
       }
-    } catch (error) {
+    } catch (authError) {
+      console.error("Auth check failed:", authError);
       router.push("/");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+    fetchShifts();
+  }, [checkAuth]);
 
   const fetchShifts = async () => {
     try {
@@ -563,7 +590,10 @@ function PostSwapTab({
                     onChange={(e) =>
                       setSwapRequest({
                         ...swapRequest,
-                        timeRule: e.target.value as any,
+                        timeRule: e.target.value as
+                          | "ANY"
+                          | "EXACT_START"
+                          | "END_NOT_AFTER",
                       })
                     }
                     className="mr-2"
@@ -579,7 +609,10 @@ function PostSwapTab({
                     onChange={(e) =>
                       setSwapRequest({
                         ...swapRequest,
-                        timeRule: e.target.value as any,
+                        timeRule: e.target.value as
+                          | "ANY"
+                          | "EXACT_START"
+                          | "END_NOT_AFTER",
                       })
                     }
                     className="mr-2"
@@ -595,7 +628,10 @@ function PostSwapTab({
                     onChange={(e) =>
                       setSwapRequest({
                         ...swapRequest,
-                        timeRule: e.target.value as any,
+                        timeRule: e.target.value as
+                          | "ANY"
+                          | "EXACT_START"
+                          | "END_NOT_AFTER",
                       })
                     }
                     className="mr-2"
@@ -710,11 +746,13 @@ function PostSwapTab({
 
 // Browse Swaps Tab Component
 function BrowseSwapsTab() {
-  const [swapRequests, setSwapRequests] = useState<any[]>([]);
+  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
   const [myShifts, setMyShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInterestModal, setShowInterestModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<SwapRequest | null>(
+    null
+  );
   const [selectedShiftId, setSelectedShiftId] = useState("");
   const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
 
@@ -730,6 +768,8 @@ function BrowseSwapsTab() {
 
       if (data.success) {
         setSwapRequests(data.swapRequests);
+      } else {
+        console.error("Failed to fetch swap requests:", data.error);
       }
     } catch (error) {
       console.error("Failed to fetch swap requests:", error);
@@ -751,7 +791,7 @@ function BrowseSwapsTab() {
     }
   };
 
-  const handleShowInterest = (request: any) => {
+  const handleShowInterest = (request: SwapRequest) => {
     setSelectedRequest(request);
     setShowInterestModal(true);
   };
@@ -777,24 +817,86 @@ function BrowseSwapsTab() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Interest submitted successfully!");
-        setShowInterestModal(false);
-        setSelectedRequest(null);
-        setSelectedShiftId("");
-        fetchSwapRequests(); // Refresh to show updated interest count
-      } else {
-        alert(data.error || "Failed to submit interest");
+        // Optimistically toggle state
+        setSwapRequests((prev) =>
+          prev.map((r) =>
+            r.id === selectedRequest.id ? { ...r, hasMyInterest: true } : r
+          )
+        );
+      } else if (
+        typeof data.error === "string" &&
+        data.error.toLowerCase().includes("already expressed interest")
+      ) {
+        // If backend reports a duplicate, reflect as already accepted
+        setSwapRequests((prev) =>
+          prev.map((r) =>
+            r.id === selectedRequest.id ? { ...r, hasMyInterest: true } : r
+          )
+        );
       }
+
+      // Close modal and refresh list to ensure server truth
+      setShowInterestModal(false);
+      setSelectedRequest(null);
+      setSelectedShiftId("");
+      fetchSwapRequests();
     } catch (error) {
       console.error("Failed to submit interest:", error);
-      alert("Network error. Please try again.");
+      // Close modal; user can retry
+      setShowInterestModal(false);
+      setSelectedRequest(null);
+      setSelectedShiftId("");
+    } finally {
+      setIsSubmittingInterest(false);
+    }
+  };
+
+  const handleWithdraw = async (swapRequestId: string) => {
+    setIsSubmittingInterest(true);
+
+    // Optimistically toggle state
+    setSwapRequests((prev) =>
+      prev.map((r) =>
+        r.id === swapRequestId ? { ...r, hasMyInterest: false } : r
+      )
+    );
+
+    try {
+      const response = await fetch(
+        `/api/interests?swapRequestId=${swapRequestId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh to ensure server truth
+        fetchSwapRequests();
+      } else {
+        console.error("Failed to withdraw interest:", data.error);
+        // Revert optimistic update on failure
+        setSwapRequests((prev) =>
+          prev.map((r) =>
+            r.id === swapRequestId ? { ...r, hasMyInterest: true } : r
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Network error withdrawing interest:", error);
+      // Revert optimistic update on failure
+      setSwapRequests((prev) =>
+        prev.map((r) =>
+          r.id === swapRequestId ? { ...r, hasMyInterest: true } : r
+        )
+      );
     } finally {
       setIsSubmittingInterest(false);
     }
   };
 
   // Filter my shifts that match the selected request's requirements
-  const getEligibleShifts = (request: any) => {
+  const getEligibleShifts = (request: SwapRequest) => {
     return myShifts.filter((shift) => {
       // Duration must match
       if (shift.durationHours !== request.haveShift.durationHours) return false;
@@ -815,10 +917,15 @@ function BrowseSwapsTab() {
       // Time requirements
       if (
         request.timeRule === "EXACT_START" &&
+        request.timeValue &&
         shift.start !== request.timeValue
       )
         return false;
-      if (request.timeRule === "END_NOT_AFTER" && shift.end > request.timeValue)
+      if (
+        request.timeRule === "END_NOT_AFTER" &&
+        request.timeValue &&
+        shift.end > request.timeValue
+      )
         return false;
 
       return true;
@@ -859,7 +966,7 @@ function BrowseSwapsTab() {
       ) : (
         <div className="space-y-4">
           {relevantRequests.map((request) => {
-            const eligibleShifts = getEligibleShifts(request);
+            const hasMyInterest = Boolean(request.hasMyInterest);
 
             return (
               <div key={request.id} className="bg-white shadow rounded-lg p-6">
@@ -916,10 +1023,10 @@ function BrowseSwapsTab() {
                           ? "Any time"
                           : request.timeRule === "EXACT_START"
                           ? `Must start at ${formatTimeForDisplay(
-                              request.timeValue
+                              request.timeValue || ""
                             )}`
                           : `Must end by ${formatTimeForDisplay(
-                              request.timeValue
+                              request.timeValue || ""
                             )}`}
                       </div>
                       {request.note && (
@@ -932,20 +1039,35 @@ function BrowseSwapsTab() {
                     <div className="text-xs text-gray-500">
                       Posted{" "}
                       {new Date(request.createdAt).toLocaleDateString("en-SG")}{" "}
-                      • {request.interests.length}{" "}
-                      {request.interests.length === 1
+                      •{" "}
+                      {request.interestCount ?? request.interests?.length ?? 0}{" "}
+                      {(request.interestCount ??
+                        request.interests?.length ??
+                        0) === 1
                         ? "interest"
                         : "interests"}
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end space-y-2">
-                    <button
-                      onClick={() => handleShowInterest(request)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                    >
-                      Show Interest
-                    </button>
+                    {hasMyInterest ? (
+                      <button
+                        onClick={() => handleWithdraw(request.id)}
+                        disabled={isSubmittingInterest}
+                        className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {isSubmittingInterest
+                          ? "Retracting..."
+                          : "Retract Swap"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleShowInterest(request)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                      >
+                        Accept Swap
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -959,7 +1081,8 @@ function BrowseSwapsTab() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-medium mb-4">
-              Show Interest in {selectedRequest.requester.fullName}'s Request
+              Show Interest in {selectedRequest.requester.fullName}&apos;s
+              Request
             </h3>
             <form onSubmit={handleSubmitInterest} className="space-y-4">
               <div>
@@ -1020,7 +1143,7 @@ function BrowseSwapsTab() {
 
 // My Requests Tab Component
 function MyRequestsTab() {
-  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [myRequests, setMyRequests] = useState<SwapRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -1089,7 +1212,7 @@ function MyRequestsTab() {
       {myRequests.length === 0 ? (
         <div className="bg-white shadow rounded-lg p-6">
           <div className="text-center text-gray-500">
-            You haven't posted any swap requests yet.
+            You haven&apos;t posted any swap requests yet.
           </div>
         </div>
       ) : (
@@ -1143,10 +1266,10 @@ function MyRequestsTab() {
                         ? "Any time"
                         : request.timeRule === "EXACT_START"
                         ? `Must start at ${formatTimeForDisplay(
-                            request.timeValue
+                            request.timeValue || ""
                           )}`
                         : `Must end by ${formatTimeForDisplay(
-                            request.timeValue
+                            request.timeValue || ""
                           )}`}
                     </div>
                     {request.note && (
@@ -1160,8 +1283,10 @@ function MyRequestsTab() {
                 <div className="text-right space-y-2">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {request.interests.length}{" "}
-                      {request.interests.length === 1
+                      {request.interestCount ?? request.interests?.length ?? 0}{" "}
+                      {(request.interestCount ??
+                        request.interests?.length ??
+                        0) === 1
                         ? "interest"
                         : "interests"}
                     </div>
@@ -1180,13 +1305,14 @@ function MyRequestsTab() {
                 </div>
               </div>
 
-              {request.interests.length > 0 && (
+              {(request.interestCount ?? request.interests?.length ?? 0) >
+                0 && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">
                     Interested People:
                   </h4>
                   <div className="space-y-2">
-                    {request.interests.map((interest: any) => (
+                    {request.interests?.map((interest) => (
                       <div
                         key={interest.id}
                         className="flex justify-between items-center bg-gray-50 p-3 rounded"

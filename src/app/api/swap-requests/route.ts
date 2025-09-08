@@ -32,19 +32,36 @@ export async function GET(request: NextRequest) {
                 haveShift: true,
                 interests: {
                     where: { isActive: true },
-                    include: {
-                        interestedUser: {
-                            select: { fullName: true }
-                        }
-                    }
+                    select: {
+                        id: true,
+                        interestedUserId: true,
+                        isActive: true,
+                        interestedUser: { select: { fullName: true } },
+                    },
                 }
             },
             orderBy: { createdAt: 'desc' }
         });
 
+        // Transform the data to include hasMyInterest and myInterestId
+        const result = swapRequests.map((req) => {
+            const myInterest = req.interests.find(interest => interest.interestedUserId === session.userId);
+            const hasMyInterest = !!myInterest;
+            const myInterestId = myInterest ? myInterest.id : null;
+
+            // Remove the full interests array from the final output and add computed fields
+            const { interests, ...rest } = req;
+            return {
+                ...rest,
+                hasMyInterest,
+                myInterestId,
+                interestCount: interests.length, // Keep the count for display
+            };
+        });
+
         return NextResponse.json({
             success: true,
-            swapRequests,
+            swapRequests: result,
         });
     } catch (error) {
         console.error('Get swap requests error:', error);

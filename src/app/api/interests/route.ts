@@ -133,3 +133,56 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const response = NextResponse.json({ success: false });
+        const session = await getIronSession<SessionData>(request, response, sessionOptions);
+
+        if (!session.isLoggedIn || !session.userId) {
+            return NextResponse.json(
+                { success: false, error: 'Not authenticated' },
+                { status: 401 }
+            );
+        }
+
+        const { searchParams } = new URL(request.url);
+        const swapRequestId = searchParams.get('swapRequestId');
+
+        if (!swapRequestId) {
+            return NextResponse.json(
+                { success: false, error: 'Swap request ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const result = await prisma.interest.updateMany({
+            where: {
+                swapRequestId: swapRequestId,
+                interestedUserId: session.userId,
+                isActive: true,
+            },
+            data: {
+                isActive: false,
+            },
+        });
+
+        if (result.count === 0) {
+            return NextResponse.json(
+                { success: false, error: 'No active interest found to withdraw' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: `Successfully withdrew ${result.count} interest(s).`,
+        });
+    } catch (error) {
+        console.error('Withdraw interest error:', error);
+        return NextResponse.json(
+            { success: false, error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
