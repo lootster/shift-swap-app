@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch("/api/me");
+      const response = await fetch("/api/user");
       const data = await response.json();
 
       if (data.success) {
@@ -87,7 +87,7 @@ export default function Dashboard() {
 
   const fetchShifts = async () => {
     try {
-      const response = await fetch("/api/me/shifts");
+      const response = await fetch("/api/user/shifts");
       const data = await response.json();
 
       if (data.success) {
@@ -778,7 +778,7 @@ function BrowseSwapsTab() {
 
   const fetchMyShifts = async () => {
     try {
-      const response = await fetch("/api/me/shifts");
+      const response = await fetch("/api/user/shifts");
       const data = await response.json();
 
       if (data.success) {
@@ -1153,7 +1153,7 @@ function MyRequestsTab() {
 
   const fetchMyRequests = async () => {
     try {
-      const response = await fetch("/api/me/swap-requests");
+      const response = await fetch("/api/user/swap-requests");
       const data = await response.json();
 
       if (data.success) {
