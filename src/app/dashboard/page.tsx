@@ -803,7 +803,7 @@ function BrowseSwapsTab() {
     setIsSubmittingInterest(true);
 
     try {
-      const response = await fetch("/api/interests", {
+      const response = await fetch("/api/swap-responses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -863,7 +863,7 @@ function BrowseSwapsTab() {
 
     try {
       const response = await fetch(
-        `/api/interests?swapRequestId=${swapRequestId}`,
+        `/api/swap-responses?swapRequestId=${swapRequestId}`,
         {
           method: "DELETE",
         }
