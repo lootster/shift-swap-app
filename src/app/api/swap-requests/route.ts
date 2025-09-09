@@ -5,6 +5,17 @@ import { prisma } from '@/lib/prisma';
 import { swapRequestSchema } from '@/lib/validations';
 import { runCleanupIfNeeded } from '@/lib/cleanup';
 
+interface SwapRequestWithInterests {
+    id: string;
+    interests: Array<{
+        id: string;
+        interestedUserId: string;
+        isActive: boolean;
+        interestedUser: { fullName: string };
+    }>;
+    [key: string]: unknown;
+}
+
 export async function GET(request: NextRequest) {
     try {
         const response = NextResponse.json({ success: false });
@@ -44,8 +55,8 @@ export async function GET(request: NextRequest) {
         });
 
         // Transform the data to include hasMyInterest and myInterestId
-        const result = swapRequests.map((req) => {
-            const myInterest = req.interests.find(interest => interest.interestedUserId === session.userId);
+        const result = swapRequests.map((req: SwapRequestWithInterests) => {
+            const myInterest = req.interests.find((interest) => interest.interestedUserId === session.userId);
             const hasMyInterest = !!myInterest;
             const myInterestId = myInterest ? myInterest.id : null;
 
