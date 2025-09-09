@@ -8,6 +8,7 @@ export const loginSchema = z.object({
         { message: 'Email must be an Apple email address (@apple.com)' }
     ),
     fullName: z.string().min(1, 'Full name is required').max(100),
+    passcode: z.string().min(1, 'Pass code is required'),
 });
 
 // Shift validation

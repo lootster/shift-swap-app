@@ -10,7 +10,24 @@ export async function POST(request: NextRequest) {
 
         // Validate request body
         const validatedData = loginSchema.parse(body);
-        const { appleEmail, fullName } = validatedData;
+        const { appleEmail, fullName, passcode } = validatedData;
+
+        // Validate passcode
+        const expectedPasscode = process.env.PASSCODE;
+        if (!expectedPasscode) {
+            console.error('PASSCODE environment variable is not set');
+            return NextResponse.json(
+                { success: false, error: 'Server configuration error' },
+                { status: 500 }
+            );
+        }
+
+        if (passcode !== expectedPasscode) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid pass code' },
+                { status: 401 }
+            );
+        }
 
         // Find or create user
         let user = await prisma.user.findUnique({
