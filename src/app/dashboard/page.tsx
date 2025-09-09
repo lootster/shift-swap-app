@@ -205,6 +205,7 @@ function PostSwapTab({
     note: "",
   });
   const [isSubmittingSwap, setIsSubmittingSwap] = useState(false);
+  const [deletingShiftId, setDeletingShiftId] = useState<string | null>(null);
 
   const handleAddShift = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,6 +257,34 @@ function PostSwapTab({
     setSelectedShift(shift);
     setShowSwapRequest(true);
     setShowAddShift(false);
+  };
+
+  const handleDeleteShift = async (shiftId: string) => {
+    if (!confirm("Are you sure you want to delete this shift?")) {
+      return;
+    }
+
+    setDeletingShiftId(shiftId);
+
+    try {
+      const response = await fetch(`/api/user/shifts/${shiftId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onShiftAdded(); // Refresh the shifts list
+        alert("Shift deleted successfully!");
+      } else {
+        alert(data.error || "Failed to delete shift");
+      }
+    } catch (error) {
+      console.error("Failed to delete shift:", error);
+      alert("Network error. Please try again.");
+    } finally {
+      setDeletingShiftId(null);
+    }
   };
 
   const handleSwapRequestSubmit = async (e: React.FormEvent) => {
@@ -722,7 +751,7 @@ function PostSwapTab({
             {shifts.map((shift) => (
               <div
                 key={shift.id}
-                className="p-6 flex justify-between items-center"
+                className="p-6 flex justify-between items-start"
               >
                 <div>
                   <div className="text-sm font-medium text-gray-900">
@@ -740,6 +769,15 @@ function PostSwapTab({
                     {formatTimeForDisplay(shift.start)} -{" "}
                     {formatTimeForDisplay(shift.end)} ({shift.durationHours}h)
                   </div>
+                  {!shift.hasActiveSwapRequest && (
+                    <button
+                      onClick={() => handleDeleteShift(shift.id)}
+                      disabled={deletingShiftId === shift.id}
+                      className="text-red-600 text-sm font-medium hover:text-red-700 disabled:opacity-50 mt-2"
+                    >
+                      {deletingShiftId === shift.id ? "Deleting..." : "Delete"}
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={() => handlePostSwapRequest(shift)}
