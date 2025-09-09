@@ -255,6 +255,7 @@ function PostSwapTab({
   const handlePostSwapRequest = (shift: Shift) => {
     setSelectedShift(shift);
     setShowSwapRequest(true);
+    setShowAddShift(false);
   };
 
   const handleSwapRequestSubmit = async (e: React.FormEvent) => {
@@ -367,7 +368,10 @@ function PostSwapTab({
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">My Shifts</h2>
         <button
-          onClick={() => setShowAddShift(true)}
+          onClick={() => {
+            setShowAddShift(true);
+            setShowSwapRequest(false);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
         >
           Add Shift
@@ -465,7 +469,10 @@ function PostSwapTab({
               </button>
               <button
                 type="button"
-                onClick={() => setShowAddShift(false)}
+                onClick={() => {
+                  setShowAddShift(false);
+                  setSelectedShift(null);
+                }}
                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-400"
               >
                 Cancel
