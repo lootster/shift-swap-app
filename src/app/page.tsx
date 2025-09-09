@@ -48,7 +48,7 @@ export default function Home() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Shift Swap</h1>
-          <p className="mt-2 text-gray-600">Apple Retail Specialists</p>
+          <p className="mt-2 text-gray-600">🍎 Retail Specialists</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
@@ -68,7 +68,7 @@ export default function Home() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Your full name"
+                placeholder="Your name on ID tag"
               />
             </div>
 
@@ -87,7 +87,7 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="your.name@apple.com"
+                placeholder="Your corporate email address"
               />
             </div>
 
