@@ -42,8 +42,8 @@ export async function DELETE(
             data: { isActive: false },
         });
 
-        // Also deactivate all related interests
-        await prisma.interest.updateMany({
+        // Also deactivate all related swap responses
+        await prisma.swapResponse.updateMany({
             where: { swapRequestId: swapRequestId },
             data: { isActive: false },
         });

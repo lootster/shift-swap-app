@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
             },
             include: {
                 haveShift: true,
-                interests: {
+                swapResponses: {
                     where: { isActive: true },
                     include: {
                         interestedUser: {
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
             },
             orderBy: { createdAt: 'desc' }
         });
+
 
         return NextResponse.json({
             success: true,

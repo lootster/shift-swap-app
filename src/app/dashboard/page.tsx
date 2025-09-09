@@ -44,7 +44,7 @@ interface SwapRequest {
   hasMyInterest: boolean;
   myInterestId: string | null;
   interestCount: number;
-  interests?: Array<{
+  swapResponses?: Array<{
     id: string;
     interestedUser: {
       fullName: string;
@@ -1093,9 +1093,11 @@ function BrowseSwapsTab() {
                       Posted{" "}
                       {new Date(request.createdAt).toLocaleDateString("en-SG")}{" "}
                       •{" "}
-                      {request.interestCount ?? request.interests?.length ?? 0}{" "}
+                      {request.interestCount ??
+                        request.swapResponses?.length ??
+                        0}{" "}
                       {(request.interestCount ??
-                        request.interests?.length ??
+                        request.swapResponses?.length ??
                         0) === 1
                         ? "interest"
                         : "interests"}
@@ -1342,9 +1344,11 @@ function MyRequestsTab({
                 <div className="text-right space-y-2">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {request.interestCount ?? request.interests?.length ?? 0}{" "}
+                      {request.interestCount ??
+                        request.swapResponses?.length ??
+                        0}{" "}
                       {(request.interestCount ??
-                        request.interests?.length ??
+                        request.swapResponses?.length ??
                         0) === 1
                         ? "interest"
                         : "interests"}
@@ -1364,39 +1368,39 @@ function MyRequestsTab({
                 </div>
               </div>
 
-              {(request.interestCount ?? request.interests?.length ?? 0) >
+              {(request.interestCount ?? request.swapResponses?.length ?? 0) >
                 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">
                     Interested People:
                   </h4>
                   <div className="space-y-2">
-                    {request.interests?.map((interest) => (
+                    {request.swapResponses?.map((response) => (
                       <div
-                        key={interest.id}
+                        key={response.id}
                         className="flex justify-between items-center bg-gray-50 p-3 rounded"
                       >
                         <div>
                           <div className="font-medium text-sm">
-                            {interest.interestedUser.fullName}
+                            {response.interestedUser.fullName}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {interest.interestedUser.appleEmail}
+                            {response.interestedUser.appleEmail}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-sm">
                             {new Date(
-                              interest.offeredShift.date + "T00:00:00"
+                              response.offeredShift.date + "T00:00:00"
                             ).toLocaleDateString("en-SG", {
                               month: "short",
                               day: "numeric",
                             })}{" "}
-                            {formatTimeForDisplay(interest.offeredShift.start)}-
-                            {formatTimeForDisplay(interest.offeredShift.end)}
+                            {formatTimeForDisplay(response.offeredShift.start)}-
+                            {formatTimeForDisplay(response.offeredShift.end)}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {interest.offeredShift.durationHours}h shift
+                            {response.offeredShift.durationHours}h shift
                           </div>
                         </div>
                       </div>

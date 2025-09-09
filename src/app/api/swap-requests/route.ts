@@ -5,9 +5,9 @@ import { prisma } from '@/lib/prisma';
 import { swapRequestSchema } from '@/lib/validations';
 import { runCleanupIfNeeded } from '@/lib/cleanup';
 
-interface SwapRequestWithInterests {
+interface SwapRequestWithResponses {
     id: string;
-    interests: Array<{
+    swapResponses: Array<{
         id: string;
         interestedUserId: string;
         isActive: boolean;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
                     select: { fullName: true, appleEmail: true }
                 },
                 haveShift: true,
-                interests: {
+                swapResponses: {
                     where: { isActive: true },
                     select: {
                         id: true,
@@ -55,18 +55,18 @@ export async function GET(request: NextRequest) {
         });
 
         // Transform the data to include hasMyInterest and myInterestId
-        const result = swapRequests.map((req: SwapRequestWithInterests) => {
-            const myInterest = req.interests.find((interest) => interest.interestedUserId === session.userId);
-            const hasMyInterest = !!myInterest;
-            const myInterestId = myInterest ? myInterest.id : null;
+        const result = swapRequests.map((req: SwapRequestWithResponses) => {
+            const myResponse = req.swapResponses.find((response) => response.interestedUserId === session.userId);
+            const hasMyInterest = !!myResponse;
+            const myInterestId = myResponse ? myResponse.id : null;
 
-            // Remove the full interests array from the final output and add computed fields
-            const { interests, ...rest } = req;
+            // Remove the full swapResponses array from the final output and add computed fields
+            const { swapResponses, ...rest } = req;
             return {
                 ...rest,
                 hasMyInterest,
                 myInterestId,
-                interestCount: interests.length, // Keep the count for display
+                interestCount: req.swapResponses.length, // Keep the count for display
             };
         });
 

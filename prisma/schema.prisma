@@ -29,7 +29,7 @@ model User {
 
   shifts              Shift[]
   swapRequests        SwapRequest[] @relation("SwapRequester")
-  interests           Interest[]
+  swapResponses       SwapResponse[]
 
   @@map("users")
 }
@@ -44,7 +44,7 @@ model Shift {
 
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   haveShiftRequests SwapRequest[]
-  offeredInterests  Interest[]
+  offeredSwapResponses SwapResponse[]
 
   @@map("shifts")
 }
@@ -63,12 +63,12 @@ model SwapRequest {
 
   requester User      @relation("SwapRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
   haveShift Shift     @relation(fields: [haveShiftId], references: [id], onDelete: Cascade)
-  interests Interest[]
+  swapResponses SwapResponse[]
 
   @@map("swap_requests")
 }
 
-model Interest {
+model SwapResponse {
   id              String   @id @default(cuid())
   swapRequestId   String
   interestedUserId String
@@ -81,5 +81,5 @@ model Interest {
   offeredShift   Shift       @relation(fields: [offeredShiftId], references: [id], onDelete: Cascade)
 
   @@unique([swapRequestId, interestedUserId, offeredShiftId])
-  @@map("interests")
+  @@map("swap_responses")
 }

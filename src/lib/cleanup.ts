@@ -6,43 +6,17 @@ export async function cleanupExpiredData() {
 
         console.log(`Running cleanup for shifts before ${today}`);
 
-        // First, deactivate all swap requests for expired shifts
-        const expiredSwapRequests = await prisma.swapRequest.updateMany({
-            where: {
-                isActive: true,
-                haveShift: {
-                    date: { lt: today }
-                }
-            },
-            data: { isActive: false }
-        });
-
-        // Deactivate all interests for expired swap requests
-        const expiredInterests = await prisma.interest.updateMany({
-            where: {
-                isActive: true,
-                swapRequest: {
-                    haveShift: {
-                        date: { lt: today }
-                    }
-                }
-            },
-            data: { isActive: false }
-        });
-
-        // Finally, delete all expired shifts
+        // Delete all expired shifts (cascade will handle related records)
         const deletedShifts = await prisma.shift.deleteMany({
             where: {
                 date: { lt: today }
             }
         });
 
-        console.log(`Cleanup completed: ${deletedShifts.count} shifts deleted, ${expiredSwapRequests.count} swap requests deactivated, ${expiredInterests.count} interests deactivated`);
+        console.log(`Cleanup completed: ${deletedShifts.count} expired shifts deleted (with cascaded related records)`);
 
         return {
-            shiftsDeleted: deletedShifts.count,
-            swapRequestsDeactivated: expiredSwapRequests.count,
-            interestsDeactivated: expiredInterests.count
+            shiftsDeleted: deletedShifts.count
         };
     } catch (error) {
         console.error('Cleanup error:', error);

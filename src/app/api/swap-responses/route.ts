@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Create interest (unique constraint will prevent duplicates)
-        const interest = await prisma.interest.create({
+        // Create swap response (unique constraint will prevent duplicates)
+        const swapResponse = await prisma.swapResponse.create({
             data: {
                 swapRequestId: validatedData.swapRequestId,
                 interestedUserId: session.userId,
@@ -114,10 +114,10 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            interest,
+            swapResponse,
         });
     } catch (error) {
-        console.error('Create interest error:', error);
+        console.error('Create swap response error:', error);
 
         // Handle unique constraint violation
         if (error instanceof Error && error.message.includes('Unique constraint')) {
@@ -156,7 +156,7 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        const result = await prisma.interest.updateMany({
+        const result = await prisma.swapResponse.updateMany({
             where: {
                 swapRequestId: swapRequestId,
                 interestedUserId: session.userId,
