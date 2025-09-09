@@ -1,36 +1,182 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shift Swap App
+
+A web application that allows team members to swap work shifts with each other. Built for internal use with up to 400 users.
+
+## What This App Does
+
+- **Post Your Shifts**: Add shifts you want to swap away
+- **Browse Available Swaps**: See what shifts others want to trade
+- **Express Interest**: Offer your shifts in exchange for others
+- **Manage Requests**: Track your swap requests and responses
+
+## Tech Stack
+
+- **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API routes
+- **Database**: SQLite with Prisma ORM
+- **Authentication**: Iron Session with passcode-based login
+- **Deployment**: Ready for Vercel or similar platforms
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+ installed
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <your-repo-url>
+   cd shift-swap-app
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file in the root directory:
+
+   ```env
+   DATABASE_URL="file:./dev.db"
+   SESSION_SECRET="your-super-secret-session-key-here"
+   PASSCODE="your-shared-team-passcode"
+   ```
+
+4. **Set up the database**
+
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+5. **Run the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+6. **Open the app**
+   Visit [http://localhost:3000](http://localhost:3000) in your browser
+
+## How to Use
+
+### For Team Members
+
+1. **Login**: Use your company email (@company.com) and the shared passcode
+2. **Add Shifts**: Go to "My Shifts" tab and add shifts you want to swap
+3. **Create Swap Requests**: Click "Post Swap Request" on any of your shifts
+4. **Browse & Respond**: Use "Browse Swap Pool" to find and respond to others' requests
+5. **Manage**: Track everything in "My Requests" tab
+
+### For Administrators
+
+- **Manual Cleanup**: Trigger database cleanup via browser console:
+  ```javascript
+  fetch("/api/cleanup", { method: "POST" });
+  ```
+- **Automatic Cleanup**: Happens every 6 hours when users browse the app
+
+## Key Features
+
+### Smart Time Management
+
+- Shifts must be between 8:00 AM - 11:00 PM
+- Only 4-hour or 9-hour shifts allowed
+- 15-minute time intervals for precision
+
+### Flexible Swap Options
+
+- **Same Day Swaps**: Trade for the exact same date
+- **Specific Dates**: List multiple acceptable dates
+- **Time Rules**: Any time, exact start time, or end-by time
+
+### Automatic Cleanup
+
+- Past shifts are automatically deleted
+- Expired swap requests are removed
+- Keeps database small and fast
+
+### Security Features
+
+- Session-based authentication
+- Input validation on all forms
+- User can only modify their own data
+- Protected API endpoints
+
+## Database Schema
+
+The app uses 4 main tables:
+
+- **Users**: Team member information
+- **Shifts**: Individual work shifts
+- **SwapRequests**: Requests to swap shifts
+- **SwapResponses**: Interest expressions from other users
+
+## Production Deployment
+
+### Environment Variables
+
+```env
+DATABASE_URL="file:./prod.db"
+SESSION_SECRET="generate-a-strong-random-key"
+PASSCODE="your-team-passcode"
+NODE_ENV="production"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Build & Deploy
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Recommended Platforms
 
-## Learn More
+- **Vercel**: Zero-config deployment
+- **Railway**: Great for full-stack apps
+- **DigitalOcean**: App Platform
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/
+│   ├── api/                 # API routes
+│   │   ├── auth/           # Login/logout
+│   │   ├── cleanup/        # Database cleanup
+│   │   ├── swap-requests/  # Swap request management
+│   │   ├── swap-responses/ # Interest management
+│   │   └── user/          # User data & shifts
+│   ├── dashboard/         # Main app interface
+│   └── page.tsx          # Login page
+├── lib/
+│   ├── prisma.ts         # Database client
+│   ├── session.ts        # Authentication config
+│   ├── validations.ts    # Input validation schemas
+│   ├── cleanup.ts        # Automatic cleanup logic
+│   ├── dateUtils.ts      # Date validation
+│   └── timeUtils.ts      # Time formatting & validation
+└── prisma/
+    └── schema.prisma     # Database schema
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
+1. Follow the existing code style
+2. Test your changes thoroughly
+3. Keep commits small and focused
+4. Use descriptive commit messages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Support
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For technical issues or questions, contact the development team.
+
+---
+
+**Note**: This app is designed for internal team use with a maximum of 400 users. The SQLite database is perfect for this scale and keeps deployment simple.
