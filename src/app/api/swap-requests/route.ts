@@ -61,7 +61,8 @@ export async function GET(request: NextRequest) {
             const myInterestId = myResponse ? myResponse.id : null;
 
             // Remove the full swapResponses array from the final output and add computed fields
-            const { swapResponses, ...rest } = req;
+            const rest = { ...req } as Record<string, unknown>;
+            delete (rest as { swapResponses?: unknown }).swapResponses;
             return {
                 ...rest,
                 hasMyInterest,

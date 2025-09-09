@@ -15,16 +15,12 @@ export const loginSchema = z.object({
 export const shiftSchema = z.object({
     date: z.string()
         .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-        .refine(
-            (date) => {
-                const validation = validateDateRange(date);
-                return validation.isValid;
-            },
-            (date) => {
-                const validation = validateDateRange(date);
-                return { message: validation.error || 'Invalid date' };
+        .superRefine((date, ctx) => {
+            const validation = validateDateRange(date);
+            if (!validation.isValid) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: validation.error || 'Invalid date' });
             }
-        ),
+        }),
     start: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:mm format'),
     end: z.string().regex(/^\d{2}:\d{2}$/, 'End time must be in HH:mm format'),
     durationHours: z.number().refine(
@@ -40,16 +36,12 @@ export const swapRequestSchema = z.object({
     wantDates: z.array(
         z.string()
             .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
-            .refine(
-                (date) => {
-                    const validation = validateDateRange(date);
-                    return validation.isValid;
-                },
-                (date) => {
-                    const validation = validateDateRange(date);
-                    return { message: validation.error || 'Invalid date' };
+            .superRefine((date, ctx) => {
+                const validation = validateDateRange(date);
+                if (!validation.isValid) {
+                    ctx.addIssue({ code: z.ZodIssueCode.custom, message: validation.error || 'Invalid date' });
                 }
-            )
+            })
     ).optional(),
     timeRule: z.enum(['ANY', 'EXACT_START', 'END_NOT_AFTER']),
     timeValue: z.string().regex(/^\d{2}:\d{2}$/).optional(),

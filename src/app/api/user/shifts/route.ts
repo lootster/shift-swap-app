@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIronSession } from 'iron-session';
 import { sessionOptions, SessionData } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+// Local type for mapping result with included relation
 import { shiftSchema } from '@/lib/validations';
 import { runCleanupIfNeeded } from '@/lib/cleanup';
 
@@ -32,7 +33,15 @@ export async function GET(request: NextRequest) {
         });
 
         // Transform the data to include hasActiveSwapRequest field
-        const shiftsWithSwapInfo = shifts.map((shift: any) => ({
+        interface ShiftWithRequests {
+            id: string;
+            date: string;
+            start: string;
+            end: string;
+            durationHours: number;
+            haveShiftRequests: { id: string }[];
+        }
+        const shiftsWithSwapInfo = shifts.map((shift: ShiftWithRequests) => ({
             id: shift.id,
             date: shift.date,
             start: shift.start,
