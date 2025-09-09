@@ -23,11 +23,27 @@ export async function GET(request: NextRequest) {
         const shifts = await prisma.shift.findMany({
             where: { userId: session.userId },
             orderBy: { date: 'asc' },
+            include: {
+                haveShiftRequests: {
+                    where: { isActive: true },
+                    select: { id: true }
+                }
+            }
         });
+
+        // Transform the data to include hasActiveSwapRequest field
+        const shiftsWithSwapInfo = shifts.map((shift: any) => ({
+            id: shift.id,
+            date: shift.date,
+            start: shift.start,
+            end: shift.end,
+            durationHours: shift.durationHours,
+            hasActiveSwapRequest: shift.haveShiftRequests.length > 0
+        }));
 
         return NextResponse.json({
             success: true,
-            shifts,
+            shifts: shiftsWithSwapInfo,
         });
     } catch (error) {
         console.error('Get shifts error:', error);

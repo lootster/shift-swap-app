@@ -25,6 +25,7 @@ interface Shift {
   start: string;
   end: string;
   durationHours: number;
+  hasActiveSwapRequest?: boolean;
 }
 
 interface SwapRequest {
@@ -168,7 +169,9 @@ export default function Dashboard() {
           <PostSwapTab shifts={shifts} onShiftAdded={fetchShifts} />
         )}
         {activeTab === "browse" && <BrowseSwapsTab />}
-        {activeTab === "requests" && <MyRequestsTab />}
+        {activeTab === "requests" && (
+          <MyRequestsTab onSwapRequestDeleted={fetchShifts} />
+        )}
       </main>
     </div>
   );
@@ -224,7 +227,7 @@ function PostSwapTab({
     }
 
     try {
-      const response = await fetch("/api/me/shifts", {
+      const response = await fetch("/api/user/shifts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -310,6 +313,8 @@ function PostSwapTab({
         });
         setShowSwapRequest(false);
         setSelectedShift(null);
+        // Refresh shifts to update button states
+        onShiftAdded();
         alert("Swap request posted successfully!");
       } else {
         alert(data.error || "Failed to post swap request");
@@ -731,9 +736,16 @@ function PostSwapTab({
                 </div>
                 <button
                   onClick={() => handlePostSwapRequest(shift)}
-                  className="text-blue-600 text-sm font-medium hover:text-blue-700"
+                  disabled={shift.hasActiveSwapRequest}
+                  className={`text-sm font-medium ${
+                    shift.hasActiveSwapRequest
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-blue-600 hover:text-blue-700"
+                  }`}
                 >
-                  Post Swap Request
+                  {shift.hasActiveSwapRequest
+                    ? "Swap Request Posted"
+                    : "Post Swap Request"}
                 </button>
               </div>
             ))}
@@ -1142,7 +1154,11 @@ function BrowseSwapsTab() {
 }
 
 // My Requests Tab Component
-function MyRequestsTab() {
+function MyRequestsTab({
+  onSwapRequestDeleted,
+}: {
+  onSwapRequestDeleted: () => void;
+}) {
   const [myRequests, setMyRequests] = useState<SwapRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -1183,6 +1199,8 @@ function MyRequestsTab() {
       if (data.success) {
         // Remove the deleted request from the list
         setMyRequests(myRequests.filter((req) => req.id !== requestId));
+        // Refresh shifts to update button states in My Shifts tab
+        onSwapRequestDeleted();
         alert("Swap request deleted successfully!");
       } else {
         alert(data.error || "Failed to delete swap request");
