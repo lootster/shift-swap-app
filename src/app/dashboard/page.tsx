@@ -144,8 +144,8 @@ export default function Dashboard() {
           <div className="flex space-x-8">
             {[
               { id: "post" as const, label: "My Shifts" },
-              { id: "browse" as const, label: "Browse Swaps" },
-              { id: "requests" as const, label: "My Requests" },
+              { id: "browse" as const, label: "Browse Swap Pool" },
+              { id: "requests" as const, label: "My Swap Requests" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -954,9 +954,7 @@ function BrowseSwapsTab() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-lg font-medium text-gray-900">
-          Browse Swap Requests
-        </h2>
+        <h2 className="text-lg font-medium text-gray-900">Browse Swap Pool</h2>
         <div className="bg-white shadow rounded-lg p-6">
           <div className="text-center text-gray-500">Loading...</div>
         </div>
@@ -972,9 +970,7 @@ function BrowseSwapsTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-medium text-gray-900">
-        Browse Swap Requests
-      </h2>
+      <h2 className="text-lg font-medium text-gray-900">Browse Swap Pool</h2>
 
       {relevantRequests.length === 0 ? (
         <div className="bg-white shadow rounded-lg p-6">
