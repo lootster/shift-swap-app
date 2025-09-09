@@ -7,13 +7,17 @@ import { loginSchema } from '@/lib/validations';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
+        console.log('Login attempt:', { appleEmail: body.appleEmail, fullName: body.fullName, hasPasscode: !!body.passcode });
 
         // Validate request body
         const validatedData = loginSchema.parse(body);
         const { appleEmail, fullName, passcode } = validatedData;
+        console.log('Validation passed');
 
         // Validate passcode
         const expectedPasscode = process.env.PASSCODE;
+        console.log('Passcode check:', { provided: passcode, expected: expectedPasscode, match: passcode === expectedPasscode });
+
         if (!expectedPasscode) {
             console.error('PASSCODE environment variable is not set');
             return NextResponse.json(
@@ -23,6 +27,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (passcode !== expectedPasscode) {
+            console.log('Passcode mismatch:', { provided: passcode, expected: expectedPasscode });
             return NextResponse.json(
                 { success: false, error: 'Invalid pass code' },
                 { status: 401 }
@@ -64,7 +69,11 @@ export async function POST(request: NextRequest) {
 
         return response;
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Login error details:', error);
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+        }
         return NextResponse.json(
             { success: false, error: 'Invalid request data' },
             { status: 400 }
