@@ -13,9 +13,9 @@ A web application that allows team members to swap work shifts with each other. 
 
 - **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
 - **Backend**: Next.js API routes
-- **Database**: SQLite with Prisma ORM
-- **Authentication**: Iron Session with passcode-based login
-- **Deployment**: Ready for Vercel or similar platforms
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Iron Session with Employee ID + passcode-based login
+- **Deployment**: Ready for Vercel, Railway, or similar platforms
 
 ## Getting Started
 
@@ -43,12 +43,13 @@ A web application that allows team members to swap work shifts with each other. 
    Create a `.env` file in the root directory:
 
    ```env
-   DATABASE_URL="file:./dev.db"
+   DATABASE_URL="postgresql://username:password@localhost:5432/shift_swap_db"
    SESSION_SECRET="your-super-secret-session-key-here"
    PASSCODE="your-shared-team-passcode"
    ```
 
 4. **Set up the database**
+   Make sure PostgreSQL is running, then:
 
    ```bash
    npx prisma generate
@@ -68,7 +69,7 @@ A web application that allows team members to swap work shifts with each other. 
 
 ### For Team Members
 
-1. **Login**: Use your company email (@company.com) and the shared passcode
+1. **Login**: Use your 6-digit Employee ID, first name, corporate email (@apple.com), and the shared passcode
 2. **Add Shifts**: Go to "My Shifts" tab and add shifts you want to swap
 3. **Create Swap Requests**: Click "Post Swap Request" on any of your shifts
 4. **Browse & Respond**: Use "Browse Swap Pool" to find and respond to others' requests
@@ -104,16 +105,18 @@ A web application that allows team members to swap work shifts with each other. 
 
 ### Security Features
 
-- Session-based authentication
-- Input validation on all forms
+- Employee ID-based authentication with data consistency validation
+- Session-based authentication with iron-session
+- Input validation on all forms (including no-space validation for first names)
 - User can only modify their own data
 - Protected API endpoints
+- Unique 6-digit Employee ID system for enhanced security
 
 ## Database Schema
 
 The app uses 4 main tables:
 
-- **Users**: Team member information
+- **Users**: Team member information (includes employeeId, firstName, corporateEmail)
 - **Shifts**: Individual work shifts
 - **SwapRequests**: Requests to swap shifts
 - **SwapResponses**: Interest expressions from other users
@@ -123,7 +126,7 @@ The app uses 4 main tables:
 ### Environment Variables
 
 ```env
-DATABASE_URL="file:./prod.db"
+DATABASE_URL="postgresql://username:password@your-db-host:5432/shift_swap_prod"
 SESSION_SECRET="generate-a-strong-random-key"
 PASSCODE="your-team-passcode"
 NODE_ENV="production"
@@ -138,9 +141,10 @@ npm start
 
 ### Recommended Platforms
 
-- **Vercel**: Zero-config deployment
-- **Railway**: Great for full-stack apps
-- **DigitalOcean**: App Platform
+- **Vercel**: Zero-config deployment (with external PostgreSQL)
+- **Railway**: Full-stack apps with built-in PostgreSQL
+- **DigitalOcean**: App Platform with managed databases
+- **Render**: Free tier with PostgreSQL support
 
 ## Project Structure
 
@@ -179,4 +183,4 @@ For technical issues or questions, contact the development team.
 
 ---
 
-**Note**: This app is designed for internal team use with a maximum of 400 users. The SQLite database is perfect for this scale and keeps deployment simple.
+**Note**: This app is designed for internal team use with a maximum of 400 users. Each user requires a unique 6-digit Employee ID assigned by HR. PostgreSQL provides excellent performance and scalability for this use case while offering robust production features.

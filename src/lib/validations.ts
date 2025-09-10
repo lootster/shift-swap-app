@@ -3,11 +3,17 @@ import { validateDateRange } from './dateUtils';
 
 // Auth validation
 export const loginSchema = z.object({
+    employeeId: z.string()
+        .regex(/^\d{6}$/, 'Employee ID must be exactly 6 digits')
+        .refine((id) => id !== '000000', 'Invalid employee ID format'),
     appleEmail: z.string().email().refine(
         (email) => email.endsWith('@apple.com'),
         { message: 'Email must be an Apple email address (@apple.com)' }
     ),
-    fullName: z.string().min(1, 'Full name is required').max(100),
+    fullName: z.string()
+        .min(1, 'First name is required')
+        .max(100)
+        .refine((name) => !name.includes(' '), 'First name cannot contain spaces'),
     passcode: z.string().min(1, 'Pass code is required'),
 });
 

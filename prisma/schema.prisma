@@ -23,6 +23,7 @@ enum TimeRule {
 
 model User {
   id         String   @id @default(cuid())
+  employeeId String   @unique @db.VarChar(6)
   fullName   String
   appleEmail String   @unique
   createdAt  DateTime @default(now())
